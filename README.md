@@ -13,3 +13,11 @@ This is a framework that is designed to simulate the dynamics of and train a mod
 ## Simulation and Dynamics
 
 ## Installation
+
+```bash
+conda create -n quanser_env python=3.10
+conda activate quanser_env
+git clone https://github.com/al-oman/quanser-balance.git
+cd quanser-balance
+pip install -e .
+```
