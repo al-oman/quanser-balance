@@ -1,3 +1,9 @@
+<div align="center">
+
+<p align="center">
+  <img src="assets/lacits_logo.png" width="20%"/>
+</p>
+
 
 # Quanser Balance Package
 
