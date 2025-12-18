@@ -4,15 +4,21 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quanser_balance"
-version = "0.0.0"
+version = "0.1.dev0"
 description = "Quanser pendulum balance."
 readme = "README.md"
-dependencies = [
-    "numpy"
-]
+authors = [{name = "Alexander Oman"}]
+dependencies = ["numpy", "scipy"]
+
+[project.optional-dependencies]
+sim = ["mujoco"]
+rl = ["gymnasium", "torch", "stable-baselines3"]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
-exclude = ["assets*", "benchmark*", "docs", "dist*", "playground*", "scripts*", "tests*"]
+where = ["src"]
 
 [tool.wheel]
 exclude = ["assets*", "benchmark*", "docs", "dist*", "playground*", "scripts*", "tests*"]
