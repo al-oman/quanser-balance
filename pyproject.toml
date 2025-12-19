@@ -11,8 +11,11 @@ authors = [{name = "Alexander Oman"}]
 dependencies = ["numpy", "scipy"]
 
 [project.optional-dependencies]
-sim = ["mujoco"]
+sim = ["mujoco", "gymnasium"]
 rl = ["gymnasium", "torch", "stable-baselines3"]
+
+[project.scripts]
+run-sim = "quanser_balance.cli:run_sim"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
