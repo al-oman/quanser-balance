@@ -10,8 +10,12 @@ src/quanser_balance.egg-info/requires.txt
 src/quanser_balance.egg-info/top_level.txt
 src/quanser_balance/dynamics/__init__.py
 src/quanser_balance/dynamics/params.py
+src/quanser_balance/envs/__init__.py
+src/quanser_balance/envs/inv_pend_env_2.py
+src/quanser_balance/envs/rot_pend_env.py
 src/quanser_balance/rl/__init__.py
 src/quanser_balance/sim/__init__.py
+src/quanser_balance/sim/backend.py
 src/quanser_balance/sim/run.py
 src/quanser_balance/utils/__init__.py
 tests/test.py

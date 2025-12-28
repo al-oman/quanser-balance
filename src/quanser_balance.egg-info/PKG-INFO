@@ -8,6 +8,7 @@ Requires-Dist: numpy
 Requires-Dist: scipy
 Provides-Extra: sim
 Requires-Dist: mujoco; extra == "sim"
+Requires-Dist: gymnasium; extra == "sim"
 Provides-Extra: rl
 Requires-Dist: gymnasium; extra == "rl"
 Requires-Dist: torch; extra == "rl"
