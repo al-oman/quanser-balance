@@ -47,7 +47,7 @@
   </worldbody>
 
   <actuator>
-    <motor name="torque0" joint="joint0" gear="1"/>
+    <motor name="torque0" joint="joint0" gear="1" ctrllimited="true" ctrlrange="-3 3"/>
     <!-- <motor name="torque1" joint="joint1" gear="1"/> -->
   </actuator>
 
