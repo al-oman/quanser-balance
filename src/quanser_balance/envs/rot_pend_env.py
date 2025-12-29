@@ -173,12 +173,12 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
 
         observation = self._get_obs()
 
-        # terminated = bool(
-        #     not np.isfinite(observation).all() or (np.abs(observation[1]) > 2*np.pi)
-        # )
         terminated = bool(
-            not np.isfinite(observation).all() or (np.abs(observation[1]) > 0.2)
+            not np.isfinite(observation).all() or (np.abs(observation[1]) > 2*np.pi)
         )
+        # terminated = bool(
+        #     not np.isfinite(observation).all() or (np.abs(observation[1]) > 0.2)
+        # )
 
         reward = self.reward(terminated)
 

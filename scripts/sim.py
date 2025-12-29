@@ -15,6 +15,7 @@ try:
         total_reward += reward
         env.render()
         over = terminated or truncated
-        print(reward)
+        print("\r\033[K", end="")  # ANSI clear-line
+        print(f"\r{obs}", end="", flush=True)
 finally:
     env.close()
