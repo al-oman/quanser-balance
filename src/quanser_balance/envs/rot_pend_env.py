@@ -6,6 +6,9 @@ from gymnasium import utils
 from gymnasium.envs.mujoco import MujocoEnv
 from gymnasium.spaces import Box
 
+from quanser_balance.envs.mdp.rewards import RotaryPendulumReward
+from quanser_balance.envs.mdp.curriculum import RotaryPendulumCurriculum
+
 DEFAULT_CAMERA_CONFIG = {
     "trackbodyid": 0,
     "distance": 2.04,
@@ -168,9 +171,15 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
         }
 
     def reward(self, terminated, obs):
+        """
+        Docstring for reward
+        
+        :param self: Description
+        :param terminated: Description
+        :param obs: Description
+        """
         angle_reward = np.cos(obs[1]) if not terminated else 0.0
         position_reward =  -1.0 * obs[0] ** 2
-        # print(position_reward)
         return angle_reward + position_reward
 
     def step(self, action):
@@ -214,6 +223,10 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
         return self._get_obs()
 
     def _get_obs(self):
+        """
+        Added clipping to observation to enforce limits on rotary arm
+        """
+
         obs = np.concatenate([self.data.qpos, self.data.qvel]).ravel()
 
         obs = np.clip(

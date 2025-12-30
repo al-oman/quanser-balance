@@ -1,0 +1,54 @@
+.
+├── assets
+│   └── lacits_logo.png
+├── logs
+│   └── rotpend
+│       └── ppo
+├── outputs
+│   └── rotpend
+│       └── ppo
+│           └── rotpend_ppo_model_2.zip
+├── pyproject.toml
+├── README.md
+├── requirements.in
+├── requirements.txt
+├── scripts
+│   ├── play.py
+│   ├── run.py
+│   ├── sb3.py
+│   └── sim.py
+├── src
+│   ├── quanser_balance
+│   │   ├── __init__.py
+│   │   ├── cli.py
+│   │   ├── envs
+│   │   │   ├── __init__.py
+│   │   │   ├── assets
+│   │   │   │   ├── rot_pend_BACKUP.xml
+│   │   │   │   └── rot_pend.xml
+│   │   │   ├── mdp
+│   │   │   │   ├── curriculum.py
+│   │   │   │   └── rewards.py
+│   │   │   ├── rot_pend_env_BACKUP.py
+│   │   │   └── rot_pend_env.py
+│   │   ├── rl
+│   │   │   ├── __init__.py
+│   │   │   └── PPO.py
+│   │   ├── sim
+│   │   │   ├── __init__.py
+│   │   │   ├── assets
+│   │   │   │   └── inverted_pendulum.xml
+│   │   │   ├── backend.py
+│   │   │   └── run.py
+│   │   └── utils
+│   │       └── __init__.py
+│   └── quanser_balance.egg-info
+│       ├── dependency_links.txt
+│       ├── entry_points.txt
+│       ├── PKG-INFO
+│       ├── requires.txt
+│       ├── SOURCES.txt
+│       └── top_level.txt
+└── structure.txt
+
+19 directories, 33 files

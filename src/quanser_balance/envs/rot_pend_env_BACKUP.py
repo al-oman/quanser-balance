@@ -15,7 +15,7 @@ from pathlib import Path
 ASSETS_DIR = Path(__file__).parent / "assets"
 
 
-class InvertedPendulumEnv(MujocoEnv, utils.EzPickle):
+class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
     """
     ## Description
     This environment is the Cartpole environment, based on the work of Barto, Sutton, and Anderson in ["Neuronlike adaptive elements that can solve difficult learning control problems"](https://ieeexplore.ieee.org/document/6313077),
@@ -126,6 +126,8 @@ class InvertedPendulumEnv(MujocoEnv, utils.EzPickle):
         frame_skip: int = 2,
         default_camera_config: dict[str, float | int] = DEFAULT_CAMERA_CONFIG,
         reset_noise_scale: float = 0.01,
+        reset_theta_range=0.05,
+        reset_theta_dot_range=0.01,
         **kwargs,
     ):
         
@@ -133,7 +135,7 @@ class InvertedPendulumEnv(MujocoEnv, utils.EzPickle):
         Added filepath to custom env XML file
         """
         if xml_file is None:
-            xml_file = ASSETS_DIR / "inv_pend.xml"
+            xml_file = ASSETS_DIR / "rot_pend.xml"
         xml_file = str(xml_file)
 
         utils.EzPickle.__init__(self, xml_file, frame_skip, reset_noise_scale, **kwargs)
@@ -165,6 +167,18 @@ class InvertedPendulumEnv(MujocoEnv, utils.EzPickle):
             "qvel": self.data.qvel.size,
         }
 
+    def reward(self, terminated, obs):
+        """
+        Docstring for reward
+        
+        :param self: Description
+        :param terminated: Description
+        :param obs: Description
+        """
+        angle_reward = np.cos(obs[1]) if not terminated else 0.0
+        position_reward =  -1.0 * obs[0] ** 2
+        return angle_reward + position_reward
+
     def step(self, action):
         self.do_simulation(action, self.frame_skip)
 
@@ -173,8 +187,11 @@ class InvertedPendulumEnv(MujocoEnv, utils.EzPickle):
         terminated = bool(
             not np.isfinite(observation).all() or (np.abs(observation[1]) > 2*np.pi)
         )
+        # terminated = bool(
+        #     not np.isfinite(observation).all() or (np.abs(observation[1]) > 0.2)
+        # )
 
-        reward = int(not terminated)
+        reward = self.reward(terminated, observation)
 
         info = {"reward_survive": reward}
 
@@ -187,14 +204,32 @@ class InvertedPendulumEnv(MujocoEnv, utils.EzPickle):
         noise_low = -self._reset_noise_scale
         noise_high = self._reset_noise_scale
 
-        qpos = self.init_qpos + self.np_random.uniform(
+        # qpos = self.init_qpos + self.np_random.uniform(
+        #     size=self.model.nq, low=noise_low, high=noise_high
+        # )
+        # qvel = self.init_qvel + self.np_random.uniform(
+        #     size=self.model.nv, low=noise_low, high=noise_high
+        # )
+        qpos = [0, 0] + self.np_random.uniform(
             size=self.model.nq, low=noise_low, high=noise_high
         )
-        qvel = self.init_qvel + self.np_random.uniform(
+        qvel = 0 + self.np_random.uniform(
             size=self.model.nv, low=noise_low, high=noise_high
         )
         self.set_state(qpos, qvel)
         return self._get_obs()
 
     def _get_obs(self):
-        return np.concatenate([self.data.qpos, self.data.qvel]).ravel()
+        """
+        Added clipping to observation to enforce limits on rotary arm
+        """
+
+        obs = np.concatenate([self.data.qpos, self.data.qvel]).ravel()
+
+        obs = np.clip(
+        obs,
+        [-np.pi/2, -10.0, -10.0, -10.0],   # min
+        [ np.pi/2,  10.0,  10.0,  10.0],   # max
+    )
+
+        return obs
