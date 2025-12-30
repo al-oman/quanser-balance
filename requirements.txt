@@ -32,6 +32,8 @@ gymnasium==1.2.3
     # via
     #   -r requirements.in
     #   stable-baselines3
+imageio==2.37.2
+    # via -r requirements.in
 importlib-resources==6.5.2
     # via etils
 jinja2==3.1.6
@@ -53,6 +55,7 @@ numpy==2.2.6
     #   -r requirements.in
     #   contourpy
     #   gymnasium
+    #   imageio
     #   matplotlib
     #   mujoco
     #   pandas
@@ -62,7 +65,9 @@ packaging==25.0
 pandas==2.3.3
     # via stable-baselines3
 pillow==12.0.0
-    # via matplotlib
+    # via
+    #   imageio
+    #   matplotlib
 pyopengl==3.1.10
     # via mujoco
 pyparsing==3.3.1
