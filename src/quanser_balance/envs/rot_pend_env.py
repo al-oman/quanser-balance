@@ -126,6 +126,8 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
         frame_skip: int = 2,
         default_camera_config: dict[str, float | int] = DEFAULT_CAMERA_CONFIG,
         reset_noise_scale: float = 0.01,
+        reset_theta_range=0.05,
+        reset_theta_dot_range=0.01,
         **kwargs,
     ):
         
@@ -165,8 +167,11 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
             "qvel": self.data.qvel.size,
         }
 
-    def reward(self, terminated):
-        return int(not terminated)
+    def reward(self, terminated, obs):
+        angle_reward = np.cos(obs[1]) if not terminated else 0.0
+        position_reward =  -1.0 * obs[0] ** 2
+        # print(position_reward)
+        return angle_reward + position_reward
 
     def step(self, action):
         self.do_simulation(action, self.frame_skip)
@@ -180,7 +185,7 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
         #     not np.isfinite(observation).all() or (np.abs(observation[1]) > 0.2)
         # )
 
-        reward = self.reward(terminated)
+        reward = self.reward(terminated, observation)
 
         info = {"reward_survive": reward}
 
@@ -193,14 +198,28 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
         noise_low = -self._reset_noise_scale
         noise_high = self._reset_noise_scale
 
-        qpos = self.init_qpos + self.np_random.uniform(
+        # qpos = self.init_qpos + self.np_random.uniform(
+        #     size=self.model.nq, low=noise_low, high=noise_high
+        # )
+        # qvel = self.init_qvel + self.np_random.uniform(
+        #     size=self.model.nv, low=noise_low, high=noise_high
+        # )
+        qpos = [0, 0] + self.np_random.uniform(
             size=self.model.nq, low=noise_low, high=noise_high
         )
-        qvel = self.init_qvel + self.np_random.uniform(
+        qvel = 0 + self.np_random.uniform(
             size=self.model.nv, low=noise_low, high=noise_high
         )
         self.set_state(qpos, qvel)
         return self._get_obs()
 
     def _get_obs(self):
-        return np.concatenate([self.data.qpos, self.data.qvel]).ravel()
+        obs = np.concatenate([self.data.qpos, self.data.qvel]).ravel()
+
+        obs = np.clip(
+        obs,
+        [-np.pi/2, -10.0, -10.0, -10.0],   # min
+        [ np.pi/2,  10.0,  10.0,  10.0],   # max
+    )
+
+        return obs
