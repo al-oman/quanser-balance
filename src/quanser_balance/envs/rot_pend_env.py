@@ -171,19 +171,22 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
             "qvel": self.data.qvel.size,
         }
 
-    # def reward(self, terminated, obs):
-    #     """
-    #     Docstring for reward
-        
-    #     :param self: Description
-    #     :param terminated: Description
-    #     :param obs: Description
-    #     """
-    #     angle_reward = np.cos(obs[1]) if not terminated else 0.0
-    #     position_reward =  -1.0 * obs[0] ** 2
-    #     return angle_reward + position_reward
     def reward(self, obs, terminated):
         return rot_pend_reward(obs, terminated, self.reward_cfg)
+    
+    def voltage_to_torque(self, V, theta_dot):
+        """
+        Kt, Ke, R taken from the Qube Servo 3 motor spec sheet
+        
+        using the following simplified equation:
+        V = R * (torque/Kt) + Ke * theta_dot
+        """
+        Kt=0.00422
+        Ke=1/(226 * 2 * np.pi / 60)
+        R=7.5
+        i = (V-Ke * theta_dot)/R
+        torque = Kt * i
+        return torque
 
     def step(self, action):
         self.do_simulation(action, self.frame_skip)
@@ -234,8 +237,8 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
 
         obs = np.clip(
         obs,
-        [-np.pi/2, -50.0, -50.0, -50.0],   # min
-        [ np.pi/2,  50.0,  50.0,  50.0],   # max
+        [-np.pi/2, -20.0, -50.0, -50.0],   # min
+        [ np.pi/2,  20.0,  50.0,  50.0],   # max
     )
 
         return obs
