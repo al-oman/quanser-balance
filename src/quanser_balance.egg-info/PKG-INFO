@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: quanser_balance
-Version: 0.1.dev0
+Version: 0.1.0
 Summary: Quanser pendulum balance.
 Author: Alexander Oman
 Description-Content-Type: text/markdown
@@ -25,7 +25,6 @@ Requires-Dist: stable-baselines3; extra == "rl"
 This is a framework that is designed to simulate the dynamics of and train a model to control the Quanser Qube-Servo3 inverted rotary pendulum.
 
 ## TODO
-- [ ] Develop simulation platform.
 - [ ] Model dynamics.
 - [ ] Train RL model.
 - [ ] Deploy demo to real-world.
