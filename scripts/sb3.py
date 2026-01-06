@@ -10,7 +10,7 @@ ROOT_DIR = SCRIPT_DIR.parent
 LOGS_DIR = ROOT_DIR / "logs" / "rotpend" / "ppo"
 OUTPUTS_DIR = ROOT_DIR / "outputs" / "rotpend" / "ppo"
 
-LOAD = True
+LOAD = False
 
 if LOAD:
     train_env = make_vec_env("RotPendEnv-v0", n_envs=1)
@@ -29,7 +29,7 @@ else:
         tensorboard_log=str(LOGS_DIR),
     )
 
-    model.learn(total_timesteps=200_000)
+    model.learn(total_timesteps=100_000)
     model.save(OUTPUTS_DIR / "rotpend_ppo_model_2")
     train_env.close()
 
