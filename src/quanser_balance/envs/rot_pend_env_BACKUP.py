@@ -6,6 +6,9 @@ from gymnasium import utils
 from gymnasium.envs.mujoco import MujocoEnv
 from gymnasium.spaces import Box
 
+from quanser_balance.envs.mdp.rewards import rot_pend_reward, RewardCfg
+from quanser_balance.envs.mdp.curriculum import RotaryPendulumCurriculum
+
 DEFAULT_CAMERA_CONFIG = {
     "trackbodyid": 0,
     "distance": 2.04,
@@ -142,6 +145,7 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
         observation_space = Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float64)
 
         self._reset_noise_scale = reset_noise_scale
+        self.reward_cfg = RewardCfg()
 
         MujocoEnv.__init__(
             self,
@@ -167,31 +171,33 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
             "qvel": self.data.qvel.size,
         }
 
-    def reward(self, terminated, obs):
-        """
-        Docstring for reward
+    # def reward(self, terminated, obs):
+    #     """
+    #     Docstring for reward
         
-        :param self: Description
-        :param terminated: Description
-        :param obs: Description
-        """
-        angle_reward = np.cos(obs[1]) if not terminated else 0.0
-        position_reward =  -1.0 * obs[0] ** 2
-        return angle_reward + position_reward
+    #     :param self: Description
+    #     :param terminated: Description
+    #     :param obs: Description
+    #     """
+    #     angle_reward = np.cos(obs[1]) if not terminated else 0.0
+    #     position_reward =  -1.0 * obs[0] ** 2
+    #     return angle_reward + position_reward
+    def reward(self, obs, terminated):
+        return rot_pend_reward(obs, terminated, self.reward_cfg)
 
     def step(self, action):
         self.do_simulation(action, self.frame_skip)
 
         observation = self._get_obs()
 
-        terminated = bool(
-            not np.isfinite(observation).all() or (np.abs(observation[1]) > 2*np.pi)
-        )
         # terminated = bool(
-        #     not np.isfinite(observation).all() or (np.abs(observation[1]) > 0.2)
+        #     not np.isfinite(observation).all() or (np.abs(observation[1]) > 2*np.pi)
         # )
+        terminated = bool(
+            not np.isfinite(observation).all() or (np.abs(observation[1]) > 0.2)
+        )
 
-        reward = self.reward(terminated, observation)
+        reward = self.reward(observation, terminated)
 
         info = {"reward_survive": reward}
 
@@ -228,8 +234,8 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
 
         obs = np.clip(
         obs,
-        [-np.pi/2, -10.0, -10.0, -10.0],   # min
-        [ np.pi/2,  10.0,  10.0,  10.0],   # max
+        [-np.pi/2, -50.0, -50.0, -50.0],   # min
+        [ np.pi/2,  50.0,  50.0,  50.0],   # max
     )
 
         return obs
