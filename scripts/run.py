@@ -9,7 +9,7 @@ OUTPUTS_DIR = ROOT_DIR / "outputs" / "rotpend" / "ppo"
 
 
 env = gym.make("RotPendEnv-v0", render_mode="human")
-model = CustomPPO.load(OUTPUTS_DIR / "rotpend_ppo_model_2", env=env)
+model = CustomPPO.load(OUTPUTS_DIR / "rotpend_ppo_model_3", env=env)
 obs, info = env.reset()
 
 try:

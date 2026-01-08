@@ -30,7 +30,7 @@ else:
     )
 
     model.learn(total_timesteps=100_000)
-    model.save(OUTPUTS_DIR / "rotpend_ppo_model_2")
+    model.save(OUTPUTS_DIR / "rotpend_ppo_model_3")
     train_env.close()
 
 env = gym.make("RotPendEnv-v0", render_mode="human")
