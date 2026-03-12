@@ -148,7 +148,8 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
         observation_space = Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float64)
 
         self._reset_noise_scale = reset_noise_scale
-        self.reward_cfg = RewardCfg()
+        self.reward_cfg = RewardCfg(energy_w=0.5)
+        self.curriculum = RotaryPendulumCurriculum(start_stage=2)  # default: full swing-up
 
         MujocoEnv.__init__(
             self,
@@ -182,8 +183,8 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
             "qvel": self.data.qvel.size,
         }
 
-    def reward(self, obs, terminated):
-        return rot_pend_reward(obs, terminated, self.reward_cfg)
+    def reward(self, obs, terminated, voltage=0.0):
+        return rot_pend_reward(obs, terminated, self.reward_cfg, voltage=voltage)
     
     def voltage_to_torque(self, voltage, arm_angular_vel):
         """
@@ -215,12 +216,12 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
         #     not np.isfinite(observation).all() or (np.abs(observation[1]) > 2*np.pi)
         # )
         terminated = bool(
-            not np.isfinite(observation).all() or (np.abs(observation[1]) > 0.2)
+            not np.isfinite(observation).all() or (np.abs(observation[1]) > 10*np.pi)
         )
 
-        reward = self.reward(observation, terminated)
+        reward = self.reward(observation, terminated, voltage=voltage)
 
-        info = {"reward_survive": reward}
+        info = {"reward": reward}
 
         if self.render_mode == "human":
             self.render()
@@ -228,19 +229,14 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
         return observation, reward, terminated, False, info
 
     def reset_model(self):
+        pend_angle = self.curriculum.get_initial_pend_angle(self.np_random)
         noise_low = -self._reset_noise_scale
         noise_high = self._reset_noise_scale
 
-        # qpos = self.init_qpos + self.np_random.uniform(
-        #     size=self.model.nq, low=noise_low, high=noise_high
-        # )
-        # qvel = self.init_qvel + self.np_random.uniform(
-        #     size=self.model.nv, low=noise_low, high=noise_high
-        # )
-        qpos = [0, 0] + self.np_random.uniform(
+        qpos = np.array([0.0, pend_angle]) + self.np_random.uniform(
             size=self.model.nq, low=noise_low, high=noise_high
         )
-        qvel = 0 + self.np_random.uniform(
+        qvel = np.zeros(self.model.nv) + self.np_random.uniform(
             size=self.model.nv, low=noise_low, high=noise_high
         )
         self.set_state(qpos, qvel)
@@ -255,8 +251,8 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
 
         obs = np.clip(
         obs,
-        [-np.pi/2, -20.0, -50.0, -50.0],   # min
-        [ np.pi/2,  20.0,  50.0,  50.0],   # max
+        [-3*np.pi/2, -20.0, -50.0, -50.0],   # min
+        [ 3*np.pi/2,  20.0,  50.0,  50.0],   # max
     )
 
         return obs

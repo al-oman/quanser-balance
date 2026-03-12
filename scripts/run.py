@@ -1,3 +1,4 @@
+import sys
 import gymnasium as gym
 import quanser_balance.envs  # triggers register()
 from quanser_balance.rl.PPO import CustomPPO
@@ -7,9 +8,10 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT_DIR = SCRIPT_DIR.parent
 OUTPUTS_DIR = ROOT_DIR / "outputs" / "rotpend" / "ppo"
 
+MODEL_NAME = sys.argv[1] if len(sys.argv) > 1 else "rotpend_ppo_model_3"
 
 env = gym.make("RotPendEnv-v0", render_mode="human")
-model = CustomPPO.load(OUTPUTS_DIR / "rotpend_ppo_model_3", env=env)
+model = CustomPPO.load(OUTPUTS_DIR / MODEL_NAME, env=env)
 obs, info = env.reset()
 
 try:
