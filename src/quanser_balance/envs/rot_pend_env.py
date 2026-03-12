@@ -123,6 +123,13 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
         ],
     }
 
+    # Qube Servo 3 motor parameters
+    MOTOR_KT = 0.0422       # Torque constant (N·m/A)
+    MOTOR_KM = 0.0422       # Back-EMF constant (V/(rad/s))
+    MOTOR_RM = 7.5          # Terminal resistance (Ω)
+    VOLTAGE_MAX = 10.0      # Recommended operating voltage limit (V)
+    VOLTAGE_DEADBAND = 0.65 # Amplifier deadband (V)
+
     def __init__(
         self,
         xml_file: str | None = None,
@@ -133,10 +140,6 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
         reset_theta_dot_range=0.01,
         **kwargs,
     ):
-        
-        """
-        Added filepath to custom env XML file
-        """
         if xml_file is None:
             xml_file = ASSETS_DIR / "rot_pend.xml"
         xml_file = str(xml_file)
@@ -154,6 +157,14 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
             observation_space=observation_space,
             default_camera_config=default_camera_config,
             **kwargs,
+        )
+
+        # Override action space: policy outputs voltage, not torque
+        self.action_space = Box(
+            low=-self.VOLTAGE_MAX,
+            high=self.VOLTAGE_MAX,
+            shape=(1,),
+            dtype=np.float64,
         )
 
         self.metadata = {
@@ -174,22 +185,29 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
     def reward(self, obs, terminated):
         return rot_pend_reward(obs, terminated, self.reward_cfg)
     
-    def voltage_to_torque(self, V, theta_dot):
+    def voltage_to_torque(self, voltage, arm_angular_vel):
         """
-        Kt, Ke, R taken from the Qube Servo 3 motor spec sheet
-        
-        using the following simplified equation:
-        V = R * (torque/Kt) + Ke * theta_dot
+        Convert voltage command to motor torque using DC motor model.
+
+        V = Rm * i + Km * ω   (voltage equation)
+        τ = Kt * i            (torque equation)
+
+        Solving for τ:
+            i = (V - Km * ω) / Rm
+            τ = Kt * (V - Km * ω) / Rm
         """
-        Kt=0.00422
-        Ke=1/(226 * 2 * np.pi / 60)
-        R=7.5
-        i = (V-Ke * theta_dot)/R
-        torque = Kt * i
+        current = (voltage - self.MOTOR_KM * arm_angular_vel) / self.MOTOR_RM
+        torque = self.MOTOR_KT * current
         return torque
 
     def step(self, action):
-        self.do_simulation(action, self.frame_skip)
+        # Policy outputs voltage; apply deadband and convert to torque for MuJoCo
+        voltage = np.clip(action[0], -self.VOLTAGE_MAX, self.VOLTAGE_MAX)
+        if abs(voltage) < self.VOLTAGE_DEADBAND:
+            voltage = 0.0
+        arm_angular_vel = self.data.qvel[0]
+        torque = self.voltage_to_torque(voltage, arm_angular_vel)
+        self.do_simulation(np.array([torque]), self.frame_skip)
 
         observation = self._get_obs()
 

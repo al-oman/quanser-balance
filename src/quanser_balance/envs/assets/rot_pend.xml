@@ -40,7 +40,7 @@
   </worldbody>
 
   <actuator>
-    <motor name="torque0" joint="joint0" gear="1" ctrllimited="true" ctrlrange="-0.02 0.02"/>
+    <motor name="torque0" joint="joint0" gear="1" ctrllimited="true" ctrlrange="-0.085 0.085"/>
   </actuator>
 
   <sensor>
