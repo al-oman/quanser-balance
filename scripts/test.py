@@ -87,8 +87,8 @@ try:
                     motor_spd, pend_spd, current])
 
         print(f"t={t_elapsed:5.3f}s  V={voltage:+6.2f}  "
-              f"θ={motor_pos:+.4f}  α={pend_pos:+.4f}  "
-              f"θ̇={motor_spd:+7.2f}  α̇={pend_spd:+7.2f}  "
+              f"theta_1={motor_pos:+.4f}  theta_2={pend_pos:+.4f}  "
+              f"theta_1_dot={motor_spd:+7.2f}  theta_2_dot={pend_spd:+7.2f}  "
               f"I={current:+.4f}")
 
         # Maintain constant sample rate
