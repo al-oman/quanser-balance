@@ -114,17 +114,19 @@ try:
         # Control latency = read → predict → write (before viewer sync)
         t_control = time.perf_counter() - t0
 
-        # Update MuJoCo visualizer with measured angles
-        mj_data.qpos[0] = theta_arm
-        mj_data.qpos[1] = theta_pend
-        mj_data.qvel[0] = dtheta_arm
-        mj_data.qvel[1] = dtheta_pend
-        mujoco.mj_forward(mj_model, mj_data)
-        viewer.sync()
+        # Update MuJoCo visualizer at ~100 Hz (every 5th step)
+        if step_count % 5 == 0:
+            mj_data.qpos[0] = theta_arm
+            mj_data.qpos[1] = theta_pend
+            mj_data.qvel[0] = dtheta_arm
+            mj_data.qvel[1] = dtheta_pend
+            mujoco.mj_forward(mj_model, mj_data)
+            viewer.sync()
 
-        print(f"arm={theta_arm:+.3f} pend={theta_pend:+.3f} | "
-              f"darm={dtheta_arm:+.1f} dpend={dtheta_pend:+.1f} | "
-              f"V={voltage:+.2f}")
+        if step_count % 500 == 0:
+            print(f"arm={theta_arm:+.3f} pend={theta_pend:+.3f} | "
+                  f"darm={dtheta_arm:+.1f} dpend={dtheta_pend:+.1f} | "
+                  f"V={voltage:+.2f}")
 
         # Sleep only the remaining time after work
         dt_work = time.perf_counter() - t0
