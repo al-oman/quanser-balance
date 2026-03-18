@@ -216,7 +216,7 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
         pend_limit = self.curriculum.termination_limits
         terminated = bool(
             not np.isfinite(observation).all()
-            or np.abs(observation[0]) > (3 * np.pi / 4)
+            # or np.abs(observation[0]) > (3 * np.pi / 4)
             or np.abs(observation[1]) > pend_limit
         )
 
