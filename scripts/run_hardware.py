@@ -66,12 +66,12 @@ try:
         arm_counts = encoder_buffer[0]
         pend_counts = encoder_buffer[1]
 
-        theta = 2 * math.pi / 2048 * arm_counts
-        alpha = -(2 * math.pi / 2048 * pend_counts) + math.pi
+        theta = -(2 * math.pi / 2048 * arm_counts)
+        alpha = (2 * math.pi / 2048 * pend_counts) + math.pi
 
         card.read_other(input_channels, 2, input_buffer)
-        theta_dot = 2 * math.pi / 2048 * input_buffer[0]
-        alpha_dot = -(2 * math.pi / 2048 * input_buffer[1])
+        theta_dot = -(2 * math.pi / 2048 * input_buffer[0])
+        alpha_dot = 2 * math.pi / 2048 * input_buffer[1]
 
 
         # Simple test input

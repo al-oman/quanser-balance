@@ -13,11 +13,14 @@ from quanser_balance.rl.PPO import CustomPPO
 import sys
 import time
 import numpy as np
+import mujoco
+import mujoco.viewer
 
 from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT_DIR = SCRIPT_DIR.parent
 OUTPUTS_DIR = ROOT_DIR / "outputs" / "rotpend" / "ppo"
+XML_PATH = ROOT_DIR / "src" / "quanser_balance" / "envs" / "assets" / "rot_pend.xml"
 
 # ── Config ───────────────────────────────────────────────────────────
 MODEL_NAME = sys.argv[1] if len(sys.argv) > 1 else "rotpend_ppo_model_3"
@@ -30,8 +33,13 @@ RAD_PER_COUNT = 2 * np.pi / COUNTS_PER_REV
 OBS_LOW  = np.array([-np.pi/2, -20.0, -50.0, -50.0])
 OBS_HIGH = np.array([ np.pi/2,  20.0,  50.0,  50.0])
 
-# ── Load model (no env needed — we build obs manually) ───────────────
+# ── Load policy (no env needed — we build obs manually) ──────────────
 model = CustomPPO.load(OUTPUTS_DIR / MODEL_NAME)
+
+# ── MuJoCo visualizer ───────────────────────────────────────────────
+mj_model = mujoco.MjModel.from_xml_path(str(XML_PATH))
+mj_data = mujoco.MjData(mj_model)
+viewer = mujoco.viewer.launch_passive(mj_model, mj_data)
 
 # ── Hardware setup ───────────────────────────────────────────────────
 card = HIL("qube_servo3_usb", "0")
@@ -63,9 +71,9 @@ try:
         card.read_encoder(encoder_channels, 2, encoder_buffer)
         card.read_other(other_in_channels, 2, other_in_buffer)
 
-        theta_arm   = encoder_buffer[0] * RAD_PER_COUNT
-        theta_pend  = encoder_buffer[1] * RAD_PER_COUNT
-        dtheta_arm  = other_in_buffer[0] * RAD_PER_COUNT
+        theta_arm   = -(encoder_buffer[0] * RAD_PER_COUNT)
+        theta_pend  = (encoder_buffer[1] * RAD_PER_COUNT) + np.pi
+        dtheta_arm  = -(other_in_buffer[0] * RAD_PER_COUNT)
         dtheta_pend = other_in_buffer[1] * RAD_PER_COUNT
 
         # Build observation (same format as env)
@@ -78,6 +86,14 @@ try:
 
         # Write voltage to motor
         card.write_analog(analog_out_channels, 1, np.array([voltage], dtype=np.float64))
+
+        # Update MuJoCo visualizer with measured angles
+        mj_data.qpos[0] = theta_arm
+        mj_data.qpos[1] = theta_pend
+        mj_data.qvel[0] = dtheta_arm
+        mj_data.qvel[1] = dtheta_pend
+        mujoco.mj_forward(mj_model, mj_data)
+        viewer.sync()
 
         print(f"arm={theta_arm:+.3f} pend={theta_pend:+.3f} | "
               f"darm={dtheta_arm:+.1f} dpend={dtheta_pend:+.1f} | "
@@ -99,4 +115,5 @@ finally:
     # Disable amplifier
     card.write_digital(digital_out_channels, 1, np.array([0], dtype=np.int8))
     card.close()
+    viewer.close()
     print("Hardware shutdown complete.")
