@@ -13,6 +13,8 @@ card = HIL("qube_servo3_usb", "0")
 #     MAX_STRING_LENGTH
 # )
 
+encoder_line_counts = 512
+
 # Channels
 encoder_channels    = np.array([0, 1], dtype=np.uint32)
 analog_in_channels  = np.array([0], dtype=np.uint32)
@@ -44,6 +46,9 @@ try:
     print("Running... Ctrl+C to stop")
     Ts = 0.002  # 500 Hz
 
+    t_step = 2.0
+    t_stop = 2.5
+
     while True:
         card.read_encoder(encoder_channels, 2, encoder_buffer)
         card.read_analog(analog_in_channels, 1, analog_in_buffer)
@@ -58,7 +63,9 @@ try:
 
         # Your control logic here
         voltage = 1.0 * math.sin(time.time())
-        voltage = np.clip(voltage, -10, 10)*0
+        voltage = np.clip(voltage, -10, 10)
+
+        voltage = 0.4
 
         card.write_analog(
             analog_out_channels, 1,
@@ -66,7 +73,7 @@ try:
 
         print(f"Motor: {motor_pos:.3f} rad, Pend: {pend_pos:.3f} rad, "
             f"Motor Spd: {motor_spd:.1f} rad/s, Pend Spd: {pend_spd:.1f} rad/s, "
-            f"Current: {current:.3f} A")
+            f"Current: {current:.3f} A, Voltage: {voltage:.3f} V")
 
         time.sleep(Ts)
 
