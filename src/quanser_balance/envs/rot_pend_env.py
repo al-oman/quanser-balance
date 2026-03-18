@@ -133,7 +133,7 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
     def __init__(
         self,
         xml_file: str | None = None,
-        frame_skip: int = 2,
+        frame_skip: int = 2,  # dt = 0.001 * 2 = 0.002s (500 Hz, matches hardware)
         default_camera_config: dict[str, float | int] = DEFAULT_CAMERA_CONFIG,
         reset_noise_scale: float = 0.01,
         reset_theta_range=0.05,
