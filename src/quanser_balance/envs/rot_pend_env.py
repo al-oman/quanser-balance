@@ -138,18 +138,19 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
         reset_noise_scale: float = 0.01,
         reset_theta_range=0.05,
         reset_theta_dot_range=0.01,
+        curriculum_stage: int = 2,
         **kwargs,
     ):
         if xml_file is None:
             xml_file = ASSETS_DIR / "rot_pend.xml"
         xml_file = str(xml_file)
 
-        utils.EzPickle.__init__(self, xml_file, frame_skip, reset_noise_scale, **kwargs)
+        utils.EzPickle.__init__(self, xml_file, frame_skip, reset_noise_scale, curriculum_stage=curriculum_stage, **kwargs)
         observation_space = Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float64)
 
         self._reset_noise_scale = reset_noise_scale
         self.reward_cfg = RewardCfg(energy_w=0.5)
-        self.curriculum = RotaryPendulumCurriculum(start_stage=2)  # default: full swing-up
+        self.curriculum = RotaryPendulumCurriculum(start_stage=curriculum_stage)
 
         MujocoEnv.__init__(
             self,
@@ -212,11 +213,11 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
 
         observation = self._get_obs()
 
-        # terminated = bool(
-        #     not np.isfinite(observation).all() or (np.abs(observation[1]) > 2*np.pi)
-        # )
+        pend_limit = self.curriculum.termination_limits
         terminated = bool(
-            not np.isfinite(observation).all() or (np.abs(observation[1]) > 10*np.pi)
+            not np.isfinite(observation).all()
+            or np.abs(observation[0]) > (np.pi - 0.2)
+            or np.abs(observation[1]) > pend_limit
         )
 
         reward = self.reward(observation, terminated, voltage=voltage)

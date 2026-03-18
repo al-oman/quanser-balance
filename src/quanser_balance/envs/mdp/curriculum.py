@@ -15,9 +15,9 @@ class RotaryPendulumCurriculum:
     """
 
     STAGES = [
-        {"pend_angle": 0.0,    "noise": 0.1,   "label": "balance"},
-        {"pend_angle": np.pi/2, "noise": 0.3,  "label": "recover"},
-        {"pend_angle": np.pi,  "noise": 0.05,  "label": "swing-up"},
+        {"pend_angle": 0.0,    "noise": 0.1,  "label": "balance",  "pend_limit": 0.2*np.pi},
+        {"pend_angle": 0.0,    "noise": 0.3,  "label": "recover",  "pend_limit": np.pi},
+        {"pend_angle": np.pi,  "noise": 0.05, "label": "swing-up", "pend_limit": 3*np.pi},
     ]
 
     def __init__(self, start_stage=0):
@@ -36,6 +36,10 @@ class RotaryPendulumCurriculum:
             self.stage += 1
             return True
         return False
+
+    @property
+    def termination_limits(self):
+        return self.current["pend_limit"]
 
     def get_initial_pend_angle(self, rng):
         """Returns initial pendulum angle with noise for reset."""

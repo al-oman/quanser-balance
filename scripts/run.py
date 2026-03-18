@@ -26,6 +26,6 @@ try:
         total_reward += reward
         env.render()
         over = terminated or truncated
-        print(f"Action: {action}, Reward: {reward}")
+        print(f"Action: {action}, Reward: {reward}, State: {obs[:2]}")
 finally:
     env.close()

@@ -1,3 +1,4 @@
+import argparse
 import gymnasium as gym
 import quanser_balance.envs  # triggers register()
 
@@ -7,17 +8,28 @@ from stable_baselines3.common.callbacks import EvalCallback
 
 from datetime import datetime
 from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--load", type=str, default=None,
+                    help="Path to a saved model to resume training from")
+parser.add_argument("--steps", type=int, default=500_000,
+                    help="Total training timesteps")
+parser.add_argument("--curriculum", type=int, default=2,
+                    help="Curriculum stage (0=balance, 1=recover, 2=swing-up)")
+args = parser.parse_args()
+
 SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT_DIR = SCRIPT_DIR.parent
 LOGS_DIR = ROOT_DIR / "logs" / "rotpend" / "ppo"
 OUTPUTS_DIR = ROOT_DIR / "outputs" / "rotpend" / "ppo"
 
 SAVE_TAG = datetime.now().strftime("%m_%d_%H_%M")
-TOTAL_TIMESTEPS = 1_000_000
-LOAD = False
+TOTAL_TIMESTEPS = args.steps
+LOAD = args.load
 
 # Eval callback saves the best model with step count in the filename
-eval_env = make_vec_env("RotPendEnv-v0", n_envs=1)
+env_kwargs = {"curriculum_stage": args.curriculum}
+eval_env = make_vec_env("RotPendEnv-v0", n_envs=1, env_kwargs=env_kwargs)
 best_model_dir = OUTPUTS_DIR / f"best_{SAVE_TAG}"
 eval_callback = EvalCallback(
     eval_env,
@@ -30,15 +42,16 @@ eval_callback = EvalCallback(
 )
 
 if LOAD:
-    train_env = make_vec_env("RotPendEnv-v0", n_envs=1)
-    model = CustomPPO.load(OUTPUTS_DIR / "rotpend_ppo_model_2", env=train_env)
-    model.learn(total_timesteps=100_000,
+    load_path = OUTPUTS_DIR / LOAD
+    train_env = make_vec_env("RotPendEnv-v0", n_envs=8, env_kwargs=env_kwargs)
+    model = CustomPPO.load(load_path, env=train_env)
+    model.learn(total_timesteps=TOTAL_TIMESTEPS,
                 reset_num_timesteps=False,
                 callback=eval_callback)
     model.save(OUTPUTS_DIR / f"rotpend_ppo_{SAVE_TAG}")
     train_env.close()
 else:
-    train_env = make_vec_env("RotPendEnv-v0", n_envs=1)
+    train_env = make_vec_env("RotPendEnv-v0", n_envs=8, env_kwargs=env_kwargs)
 
     model = CustomPPO(
         "MlpPolicy",
@@ -53,7 +66,7 @@ else:
 
 eval_env.close()
 
-env = gym.make("RotPendEnv-v0", render_mode="human")
+env = gym.make("RotPendEnv-v0", render_mode="human", curriculum_stage=args.curriculum)
 obs, info = env.reset()
 
 try:
