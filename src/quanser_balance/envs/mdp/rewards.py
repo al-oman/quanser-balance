@@ -16,7 +16,7 @@ class RewardCfg:
     energy_w: float = 0.0
 
     # Penalize arm deviation from center
-    arm_pos_w: float = -2.0
+    arm_pos_w: float = -5.0
 
     # Penalize arm velocity (smooth control)
     arm_vel_w: float = -0.05
