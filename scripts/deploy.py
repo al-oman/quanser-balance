@@ -116,9 +116,9 @@ try:
                   f"darm={dtheta_arm:+.1f} dpend={dtheta_pend:+.1f} | "
                   f"V={voltage:+.2f}")
 
-        # Sleep only the remaining time after work
-        dt_work = time.perf_counter() - t0
-        time.sleep(max(0, Ts - dt_work))
+        # Busy-wait for remaining time (time.sleep resolution too coarse on macOS)
+        while time.perf_counter() - t0 < Ts:
+            pass
         dt_actual = time.perf_counter() - t0
 
         # Track timing stats
