@@ -1,6 +1,7 @@
 __credits__ = ["Kallinteris-Andreas"]
 
 import numpy as np
+from collections import deque
 
 from gymnasium import utils
 from gymnasium.envs.mujoco import MujocoEnv
@@ -139,13 +140,17 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
         reset_theta_range=0.05,
         reset_theta_dot_range=0.01,
         curriculum_stage: int = 2,
+        action_delay: int = 3,
         **kwargs,
     ):
         if xml_file is None:
             xml_file = ASSETS_DIR / "rot_pend.xml"
         xml_file = str(xml_file)
 
-        utils.EzPickle.__init__(self, xml_file, frame_skip, reset_noise_scale, curriculum_stage=curriculum_stage, **kwargs)
+        self.action_delay = action_delay
+        self._action_buffer = deque()
+
+        utils.EzPickle.__init__(self, xml_file, frame_skip, reset_noise_scale, curriculum_stage=curriculum_stage, action_delay=action_delay, **kwargs)
         observation_space = Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float64)
 
         self._reset_noise_scale = reset_noise_scale
@@ -203,6 +208,10 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
         return -torque, current
 
     def step(self, action):
+        # Apply action delay to simulate hardware latency
+        self._action_buffer.append(action)
+        action = self._action_buffer.popleft()
+
         # Policy outputs voltage; apply deadband and convert to torque for MuJoCo
         voltage = np.clip(action[0], -self.VOLTAGE_MAX, self.VOLTAGE_MAX)
         if abs(voltage) < self.VOLTAGE_DEADBAND:
@@ -239,6 +248,11 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
             size=self.model.nv, low=noise_low, high=noise_high
         )
         self.set_state(qpos, qvel)
+
+        # Reset action delay buffer with zeros
+        delay = int(self.np_random.integers(1, self.action_delay + 1))
+        self._action_buffer = deque(np.zeros((delay, 1)), maxlen=delay)
+
         return self._get_obs()
 
     def _get_obs(self):
