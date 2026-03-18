@@ -10,7 +10,8 @@ OUTPUTS_DIR = ROOT_DIR / "outputs" / "rotpend" / "ppo"
 
 MODEL_NAME = sys.argv[1] if len(sys.argv) > 1 else "rotpend_ppo_model_3"
 
-env = gym.make("RotPendEnv-v0", render_mode="human")
+CURRICULUM = int(sys.argv[2]) if len(sys.argv) > 2 else 0
+env = gym.make("RotPendEnv-v0", render_mode="human", curriculum_stage=CURRICULUM)
 model = CustomPPO.load(OUTPUTS_DIR / MODEL_NAME, env=env)
 obs, info = env.reset()
 
@@ -19,12 +20,16 @@ try:
 
     over = False
     total_reward = 0
+    step = 0
+    RENDER_EVERY = 8  # render ~60 FPS instead of 500
 
     while not over:
         action, _ = model.predict(obs, deterministic=True)
         obs, reward, terminated, truncated, info = env.step(action)
         total_reward += reward
-        env.render()
+        step += 1
+        if step % RENDER_EVERY == 0:
+            env.render()
         over = terminated or truncated
         print(f"Action: {action}, Reward: {reward}, State: {obs[:2]}")
 finally:
