@@ -200,7 +200,7 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
         """
         current = (voltage - self.MOTOR_KM * arm_angular_vel) / self.MOTOR_RM
         torque = self.MOTOR_KT * current
-        return torque
+        return -torque, current
 
     def step(self, action):
         # Policy outputs voltage; apply deadband and convert to torque for MuJoCo
@@ -208,7 +208,7 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
         if abs(voltage) < self.VOLTAGE_DEADBAND:
             voltage = 0.0
         arm_angular_vel = self.data.qvel[0]
-        torque = self.voltage_to_torque(voltage, arm_angular_vel)
+        torque, current = self.voltage_to_torque(voltage, arm_angular_vel)
         self.do_simulation(np.array([torque]), self.frame_skip)
 
         observation = self._get_obs()
@@ -216,16 +216,14 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
         pend_limit = self.curriculum.termination_limits
         terminated = bool(
             not np.isfinite(observation).all()
-            or np.abs(observation[0]) > (np.pi - 0.2)
+            or np.abs(observation[0]) > (3 * np.pi / 4)
             or np.abs(observation[1]) > pend_limit
         )
 
         reward = self.reward(observation, terminated, voltage=voltage)
 
-        info = {"reward": reward}
+        info = {"reward": reward, "voltage": voltage, "current": current}
 
-        if self.render_mode == "human":
-            self.render()
         # truncation=False as the time limit is handled by the `TimeLimit` wrapper added during `make`
         return observation, reward, terminated, False, info
 
@@ -252,8 +250,8 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
 
         obs = np.clip(
         obs,
-        [-3*np.pi/2, -20.0, -50.0, -50.0],   # min
-        [ 3*np.pi/2,  20.0,  50.0,  50.0],   # max
+        [-np.pi, -20.0, -50.0, -50.0],   # min
+        [ np.pi,  20.0,  50.0,  50.0],   # max
     )
 
         return obs
