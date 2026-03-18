@@ -81,7 +81,7 @@ try:
         card.read_other(other_in_channels, 2, other_in_buffer)
 
         theta_arm   = -(encoder_buffer[0] * RAD_PER_COUNT)
-        theta_pend  = (encoder_buffer[1] * RAD_PER_COUNT) + np.pi
+        theta_pend  = (encoder_buffer[1] * RAD_PER_COUNT) 
         dtheta_arm  = -(other_in_buffer[0] * RAD_PER_COUNT)
         dtheta_pend = other_in_buffer[1] * RAD_PER_COUNT
 
