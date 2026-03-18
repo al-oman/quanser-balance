@@ -10,7 +10,7 @@ and writes the voltage output to the motor.
 from quanser.hardware import HIL, HILError
 from quanser_balance.rl.PPO import CustomPPO
 
-import argparse
+import sys
 import time
 import numpy as np
 import mujoco
@@ -22,23 +22,8 @@ ROOT_DIR = SCRIPT_DIR.parent
 OUTPUTS_DIR = ROOT_DIR / "outputs" / "rotpend" / "ppo"
 XML_PATH = ROOT_DIR / "src" / "quanser_balance" / "envs" / "assets" / "rot_pend.xml"
 
-# ── CLI ──────────────────────────────────────────────────────────────
-parser = argparse.ArgumentParser(description="Deploy a trained model to the Qube Servo 3")
-parser.add_argument("model", nargs="?", default="rotpend_ppo_model_3",
-                    help="Model filename in outputs/rotpend/ppo/ (default: rotpend_ppo_model_3)")
-parser.add_argument("--list", action="store_true", help="List available models and exit")
-args = parser.parse_args()
-
-if args.list:
-    models = sorted(OUTPUTS_DIR.glob("*.zip"))
-    if not models:
-        print(f"No models found in {OUTPUTS_DIR}")
-    for m in models:
-        print(m.stem)
-    raise SystemExit(0)
-
 # ── Config ───────────────────────────────────────────────────────────
-MODEL_NAME = args.model
+MODEL_NAME = sys.argv[1] if len(sys.argv) > 1 else "rotpend_ppo_model_3"
 VOLTAGE_MAX = 10.0
 Ts = 0.002  # 500 Hz control loop
 COUNTS_PER_REV = 2048  # 512 lines * 4 (quadrature)
