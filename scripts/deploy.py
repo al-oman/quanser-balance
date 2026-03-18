@@ -66,7 +66,16 @@ try:
     print(f"Deploying model: {MODEL_NAME}")
     print("Running... Ctrl+C to stop\n")
 
+    step_count = 0
+    t_loop_start = time.perf_counter()
+    dt_max = 0.0
+    dt_sum = 0.0
+    t_control_sum = 0.0
+    t_control_max = 0.0
+
     while True:
+        t0 = time.perf_counter()
+
         # Read sensors
         card.read_encoder(encoder_channels, 2, encoder_buffer)
         card.read_other(other_in_channels, 2, other_in_buffer)
@@ -87,6 +96,9 @@ try:
         # Write voltage to motor
         card.write_analog(analog_out_channels, 1, np.array([voltage], dtype=np.float64))
 
+        # Control latency = read → predict → write (before viewer sync)
+        t_control = time.perf_counter() - t0
+
         # Update MuJoCo visualizer with measured angles
         mj_data.qpos[0] = theta_arm
         mj_data.qpos[1] = theta_pend
@@ -99,7 +111,28 @@ try:
               f"darm={dtheta_arm:+.1f} dpend={dtheta_pend:+.1f} | "
               f"V={voltage:+.2f}")
 
-        time.sleep(Ts)
+        # Sleep only the remaining time after work
+        dt_work = time.perf_counter() - t0
+        time.sleep(max(0, Ts - dt_work))
+        dt_actual = time.perf_counter() - t0
+
+        # Track timing stats
+        dt_max = max(dt_max, dt_actual)
+        dt_sum += dt_actual
+        t_control_max = max(t_control_max, t_control)
+        t_control_sum += t_control
+        step_count += 1
+
+        if step_count % 500 == 0:
+            wall_time = time.perf_counter() - t_loop_start
+            print(f"  [TIMING] 500 steps in {wall_time:.3f}s (target 1.000s) | "
+                  f"avg_dt={dt_sum/500*1000:.2f}ms  max_dt={dt_max*1000:.2f}ms | "
+                  f"avg_control={t_control_sum/500*1000:.2f}ms  max_control={t_control_max*1000:.2f}ms")
+            t_loop_start = time.perf_counter()
+            dt_max = 0.0
+            dt_sum = 0.0
+            t_control_max = 0.0
+            t_control_sum = 0.0
 
 except HILError as ex:
     print(f"HIL Error: {ex.get_error_message()}")
