@@ -10,7 +10,8 @@ and writes the voltage output to the motor.
 from quanser.hardware import HIL, HILError
 from quanser_balance.rl.PPO import CustomPPO
 
-import sys
+import argparse
+import csv
 import time
 import numpy as np
 import mujoco
@@ -22,8 +23,16 @@ ROOT_DIR = SCRIPT_DIR.parent
 OUTPUTS_DIR = ROOT_DIR / "outputs" / "rotpend" / "ppo"
 XML_PATH = ROOT_DIR / "src" / "quanser_balance" / "envs" / "assets" / "rot_pend.xml"
 
+# ── CLI ──────────────────────────────────────────────────────────────
+parser = argparse.ArgumentParser(description="Deploy a trained model to the Qube Servo 3")
+parser.add_argument("model", nargs="?", default="rotpend_ppo_model_3",
+                    help="Model filename in outputs/rotpend/ppo/")
+parser.add_argument("--print", dest="csv_file", type=str, default=None,
+                    metavar="FILE", help="Log states to a CSV file")
+args = parser.parse_args()
+
 # ── Config ───────────────────────────────────────────────────────────
-MODEL_NAME = sys.argv[1] if len(sys.argv) > 1 else "rotpend_ppo_model_3"
+MODEL_NAME = args.model
 VOLTAGE_MAX = 10.0
 Ts = 0.002  # 500 Hz control loop
 COUNTS_PER_REV = 2048  # 512 lines * 4 (quadrature)
@@ -66,8 +75,17 @@ try:
     print(f"Deploying model: {MODEL_NAME}")
     print("Running... Ctrl+C to stop\n")
 
+    csv_writer = None
+    csv_fh = None
+    if args.csv_file:
+        csv_fh = open(args.csv_file, "w", newline="")
+        csv_writer = csv.writer(csv_fh)
+        csv_writer.writerow(["time", "theta_arm", "theta_pend", "dtheta_arm", "dtheta_pend", "voltage"])
+        print(f"Logging to {args.csv_file}")
+
     step_count = 0
     t_loop_start = time.perf_counter()
+    t_start = t_loop_start
     t_last_viewer = 0.0
     dt_max = 0.0
     dt_sum = 0.0
@@ -96,6 +114,14 @@ try:
 
         # Write voltage to motor
         card.write_analog(analog_out_channels, 1, np.array([voltage], dtype=np.float64))
+
+        if csv_writer:
+            csv_writer.writerow([
+                f"{time.perf_counter() - t_start:.6f}",
+                f"{theta_arm:.6f}", f"{theta_pend:.6f}",
+                f"{dtheta_arm:.6f}", f"{dtheta_pend:.6f}",
+                f"{voltage:.6f}",
+            ])
 
         # Control latency = read → predict → write (before viewer sync)
         t_control = time.perf_counter() - t0
@@ -154,4 +180,7 @@ finally:
     card.write_digital(digital_out_channels, 1, np.array([0], dtype=np.int8))
     card.close()
     viewer.close()
+    if csv_fh:
+        csv_fh.close()
+        print(f"Saved {args.csv_file}")
     print("Hardware shutdown complete.")
