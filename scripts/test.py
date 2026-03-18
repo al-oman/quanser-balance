@@ -67,7 +67,7 @@ try:
         card.read_other(other_in_channels, 2, other_in_buffer)
 
         motor_pos = encoder_buffer[0] * 2 * np.pi / 2048
-        pend_pos  = encoder_buffer[1] * 2 * np.pi / 2048
+        pend_pos  = encoder_buffer[1] * 2 * np.pi / 2048 - np.pi
         motor_spd = other_in_buffer[0] * 2 * np.pi / 2048
         pend_spd  = other_in_buffer[1] * 2 * np.pi / 2048
         current   = analog_in_buffer[0]
