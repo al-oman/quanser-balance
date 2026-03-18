@@ -16,16 +16,16 @@ class RewardCfg:
     energy_w: float = 0.0
 
     # Penalize arm deviation from center
-    arm_pos_w: float = -1.0
+    arm_pos_w: float = -2.0
 
     # Penalize arm velocity (smooth control)
-    arm_vel_w: float = -0.01
+    arm_vel_w: float = -0.05
 
     # Penalize pendulum velocity (encourage stillness at top)
     pend_vel_w: float = -0.5
 
     # Penalize large voltage commands (efficiency)
-    voltage_w: float = -0.01
+    voltage_w: float = -0.05
 
     # Linear bonus that ramps from 0 at threshold to balance_bonus at upright
     balance_bonus: float = 0.0
