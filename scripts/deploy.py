@@ -100,16 +100,16 @@ try:
         # Control latency = read → predict → write (before viewer sync)
         t_control = time.perf_counter() - t0
 
-        # Update MuJoCo visualizer at ~30 Hz (time-based)
-        t_now = time.perf_counter()
-        if t_now - t_last_viewer >= 0.033:
-            mj_data.qpos[0] = theta_arm
-            mj_data.qpos[1] = theta_pend
-            mj_data.qvel[0] = dtheta_arm
-            mj_data.qvel[1] = dtheta_pend
-            mujoco.mj_forward(mj_model, mj_data)
-            viewer.sync()
-            t_last_viewer = t_now
+        # # Update MuJoCo visualizer at ~30 Hz (time-based)
+        # t_now = time.perf_counter()
+        # if t_now - t_last_viewer >= 0.033:
+        #     mj_data.qpos[0] = theta_arm
+        #     mj_data.qpos[1] = theta_pend
+        #     mj_data.qvel[0] = dtheta_arm
+        #     mj_data.qvel[1] = dtheta_pend
+        #     mujoco.mj_forward(mj_model, mj_data)
+        #     viewer.sync()
+        #     t_last_viewer = t_now
 
         if step_count % 500 == 0:
             print(f"arm={theta_arm:+.3f} pend={theta_pend:+.3f} | "
