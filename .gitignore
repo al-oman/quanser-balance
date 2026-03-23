@@ -1,4 +1,0 @@
-__pycache__/
-src/*.egg-info/
-src/**/.egg-info/
-MUJOCO_LOG.TXT

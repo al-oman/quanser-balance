@@ -1,8 +1,0 @@
-gymnasium
-mujoco
-stable-baselines3
-numpy
-torch
-imageio
-tensorboard
-pynput
