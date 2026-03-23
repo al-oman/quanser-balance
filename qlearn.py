@@ -1,10 +1,8 @@
 import gymnasium as gym
 import numpy as np
-import csv
-from pathlib import Path
-import environment  # triggers register()
-from utils import get_state_index
 from collections import deque
+import environment  # triggers register()
+from utils import get_state_index, setup_csv_file, log_reward_to_csv, save_qtable
 
 env = gym.make("RotPendEnv-v0", max_episode_steps=10_000)
 dt = env.unwrapped.dt  # sim step duration
@@ -26,7 +24,10 @@ qtable = np.random.rand(state_dim, action_dim)
 action_space = np.linspace(-2.0, 2.0, action_dim)  # 5 discrete actions from -2V to +2V
 
 rolling_rewards = deque(maxlen=100)  # track rewards for last 100 episodes
+rolling_lengths = deque(maxlen=100)  # track episode lengths for last 100 episodes
 
+# Setup CSV file for logging rewards
+csv_file = setup_csv_file()
 
 
 #======================================= Training Loop ======================================#
@@ -72,13 +73,21 @@ for episode in range(n_episodes):
         state = next_state
 
         if terminated or truncated:
-            print(f"Episode {episode+1} ended at t={step*dt:.3f}s step={step} reward = {episode_reward}")
             break
     
     rolling_rewards.append(episode_reward)
+    rolling_lengths.append(sim_steps)
     if (episode+1) % 100 == 0:
         avg_reward = np.mean(rolling_rewards)
-        print(f"Episode {episode+1}, Average Reward (last 100): {avg_reward:.2f}, Epsilon: {epsilon:.3f}, max step: {total_steps:.2f}s")
+        avg_length = np.mean(rolling_lengths)
+        print(f"Episode {episode+1}, Avg Reward: {avg_reward:.2f}, Epsilon: {epsilon:.3f}, Average Length: {avg_length:.2f}")
+        
+        # Log rewards to CSV every 100 episodes
+        log_reward_to_csv(csv_file, episode+1, avg_reward, avg_length, epsilon)
+    
+    # Save Q-table every 10k episodes
+    if (episode+1) % 10000 == 0:
+        save_qtable(qtable, episode+1)
 
 
 #======================================= Demo Loop ======================================#

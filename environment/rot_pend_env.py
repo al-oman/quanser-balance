@@ -154,7 +154,7 @@ class RotaryPendulumEnv(MujocoEnv, utils.EzPickle):
         observation_space = Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float64)
 
         self._reset_noise_scale = reset_noise_scale
-        self.reward_cfg = RewardCfg(energy_w=0.5)
+        self.reward_cfg = RewardCfg()
         self.curriculum = RotaryPendulumCurriculum(start_stage=curriculum_stage)
 
         MujocoEnv.__init__(
