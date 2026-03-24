@@ -12,7 +12,7 @@ total_time = 10.0  # total simulation time in seconds
 total_steps = int(total_time / dt)
 
 gamma = 0.99  # discount factor
-alpha = 0.1  # learning rate
+alpha = 0.25  # learning rate
 
 n_episodes = 100_000
 
